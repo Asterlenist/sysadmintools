@@ -9,9 +9,10 @@ run separately.
 | Tool | Description |
 | --- | --- |
 | `genpass` | Generates a 16-character password using uppercase letters, lowercase letters, digits, and special characters. Its length and character sets are currently configured in the source code. |
-| `upd` | Runs the `update` command for the package manager recorded in `~/.pkgmgr`, using `sudo`. |
+| `upd` | Detects a supported package manager in `PATH` and runs its update command using `sudo`. |
 | `servicegen` | Interactively collects values for a systemd service unit and prints a draft along with installation commands. It does not create or install the unit file. |
 | `logclean` | Scans `/var/log` for `.log` and `.gz` files older than 30 days, skipping paths containing `journal`. It previews deletions by default. |
+| `sysbak` | Creates a timestamped compressed backup of `/etc`, `/var/log`, and selected user configuration files under `~/`. It skips missing optional paths instead of failing the archive. |
 | `install.py` | An experimental interactive installer. It installs dependencies, installs Rust, clones this repository, builds some tools, and appends aliases to `~/.bashrc`. See the notes below before running it. |
 
 ## Requirements
@@ -47,16 +48,16 @@ cargo build --release
 ```
 
 The compiled executable is `upd/target/release/upd`.
-The program expects `~/.pkgmgr` to contain the name of an installed package
-manager, such as `apt` or `dnf`. For example:
+The program detects the first supported package manager found in `PATH`
+(`apt`, `apt-get`, `dnf`, `yum`, `zypper`, or `pacman`). For example:
 
 ```sh
-printf '%s\n' apt > ~/.pkgmgr
 cargo run --release
 ```
 
-`upd` runs `sudo <package-manager> update`; it does not install available
-upgrades.
+`upd` runs the package manager's update command using `sudo`; the exact effect
+depends on the package manager. For example, `apt update` refreshes package
+indexes, while `pacman -Syu` also installs available upgrades.
 
 ### Service unit draft
 
@@ -84,6 +85,15 @@ sudo python3 logclean/logclean.py --delete
 Deletion is permanent. The script uses a fixed 30-day threshold and scans
 `/var/log`; it does not accept a directory or age as command-line options.
 Inspect the preview and ensure you have backups before using `--delete`.
+
+### System backup
+
+```sh
+sudo bash sysbak/sysbak.sh
+```
+
+The script creates a timestamped tar.gz archive under `~/backups/sysbak` and
+skips optional user config files that are not present.
 
 ## Installer notes
 

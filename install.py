@@ -3,7 +3,7 @@ import shlex
 import shutil
 import subprocess
 
-VERSION = "v0.1"
+VERSION = "v0.2"
 REPOSITORY_URL = "https://github.com/Asterlenist/sysadmintools"
 PACKAGE_MANAGERS = {
     "apt": ("install", "g++"),
@@ -34,8 +34,6 @@ while True:
 
         if package_manager_confirm in ("", "y"):
             print("Alright. Let's continue...")
-            with open(os.path.expanduser("~/.pkgmgr"), "w", encoding="utf-8") as file:
-                file.write(package_manager_path)
             break
 
         if package_manager_confirm == "n":
@@ -49,7 +47,7 @@ while True:
 try:
     print("[1/3] Installin' dependencies... ")
     install_action, compiler_package = PACKAGE_MANAGERS[package_manager]
-    dependency_command = ["sudo", package_manager, install_action]
+    dependency_command = ["sudo", package_manager_path, install_action]
     if package_manager == "pacman":
         dependency_command.append("--needed")
     subprocess.run(
