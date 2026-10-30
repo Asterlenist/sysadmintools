@@ -17,7 +17,7 @@ run separately.
 ## Requirements
 
 - Linux
-- Python 3 for `servicegen` and `logclean`
+- Python 3 for `servicegen`, `logclean`, and `install.py`
 - A C++ compiler such as `g++` for `genpass`
 - Rust and Cargo for `upd`
 - `sudo` and the relevant package manager to run `upd` or delete system logs
@@ -46,6 +46,7 @@ cd upd
 cargo build --release
 ```
 
+The compiled executable is `upd/target/release/upd`.
 The program expects `~/.pkgmgr` to contain the name of an installed package
 manager, such as `apt` or `dnf`. For example:
 
@@ -64,7 +65,7 @@ python3 servicegen/servicegen.py
 ```
 
 Review the printed draft before using it. The script prints prompts' answers
-as a draft; it does not validate values or write a unit file.
+using systemd unit-file syntax; it does not validate values or write a unit file.
 
 ### Log cleaner
 
@@ -87,14 +88,16 @@ Inspect the preview and ensure you have backups before using `--delete`.
 ## Installer notes
 
 `install.py` is not required to use the tools. It prompts for a package manager,
-uses `sudo` to install dependencies, downloads and runs the Rust installer,
-clones the repository into `~/.local/share/sysadmintools`, and appends aliases
-to `~/.bashrc`. Review the script before running it, since it makes system and
-shell configuration changes.
+uses `sudo` to install dependencies (including a C++ compiler), downloads and
+runs the Rust installer, clones the repository into
+`~/.local/share/sysadmintools`, builds `upd` and `genpass`, and appends working
+aliases for all four tools to `~/.bashrc`. It stops if an installation, clone,
+or build command fails. Review the script before running it, since it makes
+system and shell configuration changes.
 
-The installer is experimental: it builds `upd` and `genpass`, but does not
-build or install `servicegen` or `logclean`. The manual commands above are the
-reliable way to run those scripts.
+The installer is experimental and expects the destination repository not to
+already exist. The manual commands above are also available if you prefer not
+to run it.
 
 ## License
 

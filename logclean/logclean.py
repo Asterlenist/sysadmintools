@@ -1,6 +1,6 @@
+import argparse
 import os
 import time
-import sys
 
 def clean_logs(log_dir, days, dry_run=True):
     print(f"Searching for logs older than {days} days in {log_dir}...")
@@ -8,8 +8,14 @@ def clean_logs(log_dir, days, dry_run=True):
     current_time = time.time()
     cutoff_time = current_time - (days * 86400)
     total_freed_mb = 0
+    error_count = 0
 
-    for root, dirs, files in os.walk(log_dir):
+    def report_walk_error(error):
+        nonlocal error_count
+        error_count += 1
+        print(f"Error scanning {error.filename}: {error}")
+
+    for root, _dirs, files in os.walk(log_dir, onerror=report_walk_error):
         if "journal" in root:
             continue
             
@@ -31,17 +37,26 @@ def clean_logs(log_dir, days, dry_run=True):
                         print(f"Deleted: {file_path} ({file_size_mb:.2f} MB)")
                     
                     total_freed_mb += file_size_mb
-            except Exception as e:
-                print(f"Error with {file_path}: {e}")
+            except OSError as error:
+                error_count += 1
+                print(f"Error with {file_path}: {error}")
 
     print(f"\nDone! {'Would have' if dry_run else 'Actually'} freed: {total_freed_mb:.2f} MB")
+    if error_count:
+        print(f"Encountered {error_count} error(s).")
+    return error_count
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Preview or delete old log files.")
+    parser.add_argument(
+        "--delete",
+        action="store_true",
+        help="permanently delete eligible files instead of previewing them",
+    )
+    args = parser.parse_args()
 
-    if os.geteuid() != 0:
+    if args.delete and os.geteuid() != 0:
         print("Warning: Rights of root (sudo) are required to delete system logs.")
-    
 
-    delete_flag = "--delete" in sys.argv
-    
-    clean_logs("/var/log", days=30, dry_run=not delete_flag)
+    if clean_logs("/var/log", days=30, dry_run=not args.delete):
+        raise SystemExit(1)

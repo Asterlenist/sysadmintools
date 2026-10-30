@@ -1,76 +1,113 @@
 import os
+import shlex
+import shutil
 import subprocess
-import sys
 
-version = "v0.1"
-dependencies = ["tree", "git", "curl"]
-gitProjectLink = "https://github.com/Asterlenist/sysadmintools"
+VERSION = "v0.1"
+REPOSITORY_URL = "https://github.com/Asterlenist/sysadmintools"
+PACKAGE_MANAGERS = {
+    "apt": ("install", "g++"),
+    "apt-get": ("install", "g++"),
+    "dnf": ("install", "gcc-c++"),
+    "yum": ("install", "gcc-c++"),
+    "zypper": ("install", "gcc-c++"),
+    "pacman": ("-S", "gcc"),
+}
 
-print("Installer ", version)
+print("Installer ", VERSION)
 
 while True:
-    packageManager = input("Write your Package Manager (example: apt) ")
-    result = subprocess.run(["which", packageManager], capture_output=True, text=True)
-
-    if not result.stdout:
-        print(f"{packageManager} is not found!")
+    package_manager = input("Write your Package Manager (example: apt) ").strip()
+    if package_manager not in PACKAGE_MANAGERS:
+        print(f"{package_manager} is not a supported package manager.")
         continue
 
-    print(f"Your Package Manager is {result.stdout.strip()}")
+    package_manager_path = shutil.which(package_manager)
+    if package_manager_path is None:
+        print(f"{package_manager} is not found!")
+        continue
+
+    print(f"Your Package Manager is {package_manager_path}")
 
     while True:
-        packageManagerConfirm = input("... right? [Y/n] ").strip().lower()
+        package_manager_confirm = input("... right? [Y/n] ").strip().lower()
 
-        if packageManagerConfirm in ['', 'y', 'Y']:
+        if package_manager_confirm in ("", "y"):
             print("Alright. Let's continue...")
             with open(os.path.expanduser("~/.pkgmgr"), "w", encoding="utf-8") as file:
-                file.write(f"{result.stdout.strip()}")
-            break
-        
-        elif packageManagerConfirm == 'n' or packageManagerConfirm == 'N':
+                file.write(package_manager_path)
             break
 
-        else:
-            print("... right? [Y/n] ")
+        if package_manager_confirm == "n":
+            break
 
-    if packageManagerConfirm in ['', 'y', 'Y']:
+        print("... right? [Y/n] ")
+
+    if package_manager_confirm in ("", "y"):
         break
 
-print("[1/3] Installin' dependencies... ")
+try:
+    print("[1/3] Installin' dependencies... ")
+    install_action, compiler_package = PACKAGE_MANAGERS[package_manager]
+    dependency_command = ["sudo", package_manager, install_action]
+    if package_manager == "pacman":
+        dependency_command.append("--needed")
+    subprocess.run(
+        [*dependency_command, "tree", "git", "curl", compiler_package],
+        check=True,
+    )
 
-install_cmd = "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+    rustup_download = subprocess.run(
+        [
+            "curl",
+            "--proto",
+            "=https",
+            "--tlsv1.2",
+            "-sSf",
+            "https://sh.rustup.rs",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    subprocess.run(
+        ["sh", "-s", "--", "-y"],
+        input=rustup_download.stdout,
+        text=True,
+        check=True,
+    )
 
-if packageManager == "apt" or packageManager == "dnf" or packageManager == "zypper" or packageManager == "apt-get" or packageManager == "yum":
-    subprocess.run(["sudo", packageManager, "install", *dependencies])
-    subprocess.run(install_cmd, shell=True, check=True)
-    os.environ["PATH"] += os.pathsep + os.path.expanduser("~/.cargo/bin")
+    cargo_bin = os.path.expanduser("~/.cargo/bin")
+    os.environ["PATH"] = os.pathsep.join((os.environ.get("PATH", ""), cargo_bin))
 
-elif packageManager == "pacman":
-    subprocess.run(["sudo", packageManager, "-S", *dependencies])
-    subprocess.run(install_cmd, shell=True, check=True)
-    os.environ["PATH"] += os.pathsep + os.path.expanduser("~/.cargo/bin")
+    print("[2/3] Clonin' & buildin' from Github...")
+    share_dir = os.path.expanduser("~/.local/share")
+    os.makedirs(share_dir, exist_ok=True)
+    dest = os.path.join(share_dir, "sysadmintools")
+    subprocess.run(["git", "clone", REPOSITORY_URL, dest], check=True)
+    subprocess.run(
+        ["cargo", "build", "--release"],
+        cwd=os.path.join(dest, "upd"),
+        check=True,
+    )
+    subprocess.run(
+        ["g++", "-std=c++11", "genpass.cpp", "-o", "genpass"],
+        cwd=os.path.join(dest, "genpass"),
+        check=True,
+    )
 
-print("[2/3] Clonin' & buildin' from Github...")
+    print("[3/3] Installin' SysAdminTools to system")
+    commands = {
+        "upd": os.path.join(dest, "upd", "target", "release", "upd"),
+        "genpass": os.path.join(dest, "genpass", "genpass"),
+        "servicegen": f"python3 {os.path.join(dest, 'servicegen', 'servicegen.py')}",
+        "logclean": f"python3 {os.path.join(dest, 'logclean', 'logclean.py')}",
+    }
+    with open(os.path.expanduser("~/.bashrc"), "a", encoding="utf-8") as bashrc:
+        for alias, command in commands.items():
+            bashrc.write(f"alias {alias}={shlex.quote(command)}\n")
 
-subprocess.run(["git", "clone", gitProjectLink], cwd=os.path.expanduser("~/.local/share"))
-
-subprocess.run(["cargo", "build", "--release"], cwd=os.path.expanduser("~/.local/share/sysadmintools/upd"))
-
-subprocess.run(["g++", "genpass.cpp", "-o", "genpass"], cwd=os.path.expanduser("~/.local/share/sysadmintools/genpass"))
-
-print("[3/3] Installin' SysAdminTools to system")
-
-dest = os.path.expanduser("~/.local/share/sysadmintools")
-
-with open(os.path.expanduser("/tmp/alias-for-sysadmintools"), "w", encoding="utf-8") as file:
-    file.write("alias upd='~/.local/share/sysadmintools/upd/target/release/upd'\n")
-    file.write("alias genpass='~/.local/share/sysadmintools/genpass/genpass'\n")
-    file.write("alias servicegen='~/.local/share/sysadmintools/servicegen/target/release/servicegen'\n")
-    file.write("alias logclean='~/.local/share/sysadmintools/logclean/logclean.py'\n")
-
-with open(os.path.expanduser("~/.bashrc"), "a", encoding="utf-8") as bashrc, \
-     open("/tmp/alias-for-sysadmintools", "r", encoding="utf-8") as tmp:
-    bashrc.write(tmp.read())
-
+except (OSError, subprocess.CalledProcessError) as error:
+    raise SystemExit(f"Installation failed: {error}") from error
 
 print("Installation complete! Please restart your terminal or run 'source ~/.bashrc' to apply the changes.")

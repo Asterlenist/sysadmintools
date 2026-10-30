@@ -1,38 +1,48 @@
 use std::env;
+use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, ExitCode};
 
-fn get_pkg_manager() -> String {
-    // 1. Получаем путь к домашней папке
-    let home = env::var("HOME").expect("Could not find variable HOME");
-    
-    // 2. Строим полный путь (home + "/.pkgmgr")
+fn get_pkg_manager() -> Result<String, Box<dyn Error>> {
+    let home = env::var("HOME")?;
     let mut path = PathBuf::from(home);
     path.push(".pkgmgr");
-    
-    // 3. Читаем файл в строку. 
-    // expect() уронит программу с ошибкой, если файла нет.
-    let content = fs::read_to_string(&path)
-        .expect("The .pkgmgr file was not found. Run the installer!");
-        
-    // 4. Убираем лишние пробелы и переносы строк (аналог .strip() в Python)
-    content.trim().to_string()
+    let content = fs::read_to_string(&path)?;
+    let pkg_manager = content.trim();
+    if pkg_manager.is_empty() {
+        return Err("The .pkgmgr file is empty. Run the installer again.".into());
+    }
+    Ok(pkg_manager.to_string())
 }
 
-fn main() {
-    let pkg_manager = get_pkg_manager();
+fn main() -> ExitCode {
+    let pkg_manager = match get_pkg_manager() {
+        Ok(pkg_manager) => pkg_manager,
+        Err(error) => {
+            eprintln!("Could not read package manager configuration: {error}");
+            return ExitCode::FAILURE;
+        }
+    };
     println!("I use the manager: {}", pkg_manager);
 
-    let status = Command::new("sudo")
+    let status = match Command::new("sudo")
         .arg(&pkg_manager)
         .arg("update")
         .status()
-        .expect("Failed to run command");
+    {
+        Ok(status) => status,
+        Err(error) => {
+            eprintln!("Failed to run sudo or package manager: {error}");
+            return ExitCode::FAILURE;
+        }
+    };
 
     if status.success() {
         println!("The update was successful!");
+        ExitCode::SUCCESS
     } else {
-        println!("Error during update");
+        eprintln!("Error during update");
+        ExitCode::FAILURE
     }
 }

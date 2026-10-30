@@ -1,25 +1,6 @@
- #!/usr/bin/env python3
+#!/usr/bin/env python3
 
-# [Unit]
-# Description={description}
-# After={example: network.target}
-#
-# [Service]
-# Type={example: simple}
-# User={example: root}
-# WorkingDirectory={example: /opt/myapp}
-# ExecStart={example: /opt/myapp/app_binary}
-# Restart={example: always}
-# RestartSec={example: 5}
-#
-# [Install]
-# WantedBy={example: multi-user.target}
-
-import os
-import subprocess
-
-version = "v0.1"
-
+version = "v0.11"
 print("SERVICEGEN ", version)
 
 name = input("What's the name of your service? [example: name.service] ")
@@ -36,19 +17,19 @@ wanted_by = input("What target should this service be wanted by? [example: multi
 print(f"\nYour service configuration ({name}):")
 print("---------------------------")
 print("[Unit]")
-print(f"Description: {description}")
-print(f"After: {after}")
-print(" ")
+print(f"Description={description}")
+print(f"After={after}")
+print()
 print("[Service]")
-print(f"Type: {service_type}")
-print(f"User: {user}")
-print(f"WorkingDirectory: {working_directory}")
-print(f"ExecStart: {exec_start}")
-print(f"Restart: {restart}")
-print(f"RestartSec: {restart_sec}")
-print(" ")
+print(f"Type={service_type}")
+print(f"User={user}")
+print(f"WorkingDirectory={working_directory}")
+print(f"ExecStart={exec_start}")
+print(f"Restart={restart}")
+print(f"RestartSec={restart_sec}")
+print()
 print("[Install]")
-print(f"WantedBy: {wanted_by}")
+print(f"WantedBy={wanted_by}")
 
 print("How to install this service:")
 print(f"1. Save the configuration to /etc/systemd/system/{name}")
