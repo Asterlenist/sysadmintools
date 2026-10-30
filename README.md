@@ -141,10 +141,10 @@ optional user config files that are not present.
 `install.py` is not required to use the tools. It prompts for a package manager,
 uses `sudo` to install dependencies (including a C++ compiler), downloads and
 runs the Rust installer, clones the repository into
-`~/.local/share/sysadmintools`, builds `upd` and `genpass`, and appends working
-aliases for all four tools to `~/.bashrc`. It stops if an installation, clone,
-or build command fails. Review the script before running it, since it makes
-system and shell configuration changes.
+`~/.local/share/sysadmintools`, builds `upd`, `genpass`, and `diskcheck`, and
+appends aliases for all command-line tools to `~/.bashrc`. It stops if an
+installation, clone, or build command fails. Review the script before running
+it, since it makes system and shell configuration changes.
 
 The installer is experimental and expects the destination repository not to
 already exist. The manual commands above are also available if you prefer not

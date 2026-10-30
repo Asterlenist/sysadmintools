@@ -93,13 +93,23 @@ try:
         cwd=os.path.join(dest, "genpass"),
         check=True,
     )
+    subprocess.run(
+        ["g++", "-std=c++11", "diskcheck.cc", "-o", "diskcheck"],
+        cwd=os.path.join(dest, "diskcheck"),
+        check=True,
+    )
 
     print("[3/3] Installin' SysAdminTools to system")
     commands = {
         "upd": os.path.join(dest, "upd", "target", "release", "upd"),
         "genpass": os.path.join(dest, "genpass", "genpass"),
+        "diskcheck": os.path.join(dest, "diskcheck", "diskcheck"),
+        "pkgcheck": f"bash {os.path.join(dest, 'pkgcheck', 'pkgcheck.sh')}",
         "servicegen": f"python3 {os.path.join(dest, 'servicegen', 'servicegen.py')}",
         "logclean": f"python3 {os.path.join(dest, 'logclean', 'logclean.py')}",
+        "sysbak": f"bash {os.path.join(dest, 'sysbak', 'sysbak.sh')}",
+        "sysinfo": f"bash {os.path.join(dest, 'sysinfo', 'sysinfo.sh')}",
+        "usercheck": f"bash {os.path.join(dest, 'usercheck', 'usercheck.sh')}",
     }
     with open(os.path.expanduser("~/.bashrc"), "a", encoding="utf-8") as bashrc:
         for alias, command in commands.items():
