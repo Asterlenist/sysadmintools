@@ -17,12 +17,12 @@ run separately.
 | `sysbak` | Creates a timestamped compressed backup of `/etc`, `/var/log`, and selected user configuration files under `~/`. It skips missing optional paths instead of failing the archive. |
 | `sysinfo` | Prints basic system, CPU, memory, disk, and network-interface information. |
 | `usercheck` | Prints information about the current user, including groups, processes, login history, environment variables, and home-directory permissions. |
-| `install.py` | An experimental interactive installer. It installs dependencies, installs Rust, clones this repository, builds some tools, and appends aliases to `~/.bashrc`. See the notes below before running it. |
+| `install.sh` | An experimental interactive Bash installer. It installs dependencies, installs Rust, clones this repository, builds some tools, and appends aliases to `~/.bashrc`. See the notes below before running it. |
 
 ## Requirements
 
 - Linux
-- Python 3 for `servicegen`, `logclean`, and `install.py`
+- Python 3 for `servicegen` and `logclean`
 - A C++ compiler such as `g++` for `genpass`
 - A C++ compiler such as `g++` for `diskcheck`
 - Rust and Cargo for `upd`
@@ -138,13 +138,19 @@ optional user config files that are not present.
 
 ## Installer notes
 
-`install.py` is not required to use the tools. It prompts for a package manager,
-uses `sudo` to install dependencies (including a C++ compiler), downloads and
-runs the Rust installer, clones the repository into
+`install.sh` is not required to use the tools. It prompts for a package
+manager, uses `sudo` to install dependencies (including a C++ compiler),
+downloads and runs the Rust installer, clones this repository into
 `~/.local/share/sysadmintools`, builds `upd`, `genpass`, and `diskcheck`, and
 appends aliases for all command-line tools to `~/.bashrc`. It stops if an
 installation, clone, or build command fails. Review the script before running
 it, since it makes system and shell configuration changes.
+
+To run the installer directly from GitHub:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Asterlenist/sysadmintools/main/install.sh | bash
+```
 
 The installer is experimental and expects the destination repository not to
 already exist. The manual commands above are also available if you prefer not
