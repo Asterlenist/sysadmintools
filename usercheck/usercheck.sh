@@ -7,10 +7,14 @@ echo "Home Directory: $HOME"
 echo "Shell: $SHELL"
 echo "------------------"
 echo "User Groups:"
-groups $(whoami) | awk -F: '{print $2}' | tr ' '
+groups "$(whoami)" | awk -F: '{print $2}' | tr ' ' '\n'
 echo "------------------"
 echo "Last Login:"
-last -n 1 $(whoami) | awk '{print $4, $5, $6, $7}'
+if command -v last >/dev/null 2>&1; then
+    last -n 1 "$(whoami)" | awk '{print $4, $5, $6, $7}'
+else
+    echo "The 'last' command is not available."
+fi
 echo "------------------"
 echo "User Processes:"
 ps -u $(whoami) -o pid,ppid,cmd,%mem,%cpu
@@ -39,7 +43,11 @@ echo "User Disk Usage:"
 du -sh $HOME 2>/dev/null || echo "Unable to determine disk usage for home directory."
 echo "------------------"
 echo "User Login History:"
-last -n 5 $(whoami) | awk '{print $4, $5, $6, $7}'
+if command -v last >/dev/null 2>&1; then
+    last -n 5 "$(whoami)" | awk '{print $4, $5, $6, $7}'
+else
+    echo "The 'last' command is not available."
+fi
 echo "------------------"
 echo "User Account Expiration:"
 chage -l $(whoami) | grep "Account expires" | awk -F: '{print $2}' | xargs

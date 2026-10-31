@@ -1,13 +1,21 @@
 #!/bin/bash
 
+format_columns() {
+    if command -v column >/dev/null 2>&1; then
+        column -t
+    else
+        cat
+    fi
+}
+
 echo "Package Information"
 echo "------------------"
 echo "Installed Packages:"
-dpkg -l | awk '{print $2, $3}' | column -t
+dpkg -l | awk '{print $2, $3}' | format_columns
 echo "------------------"
 echo "Package Updates:"
 if [ -x "$(command -v apt)" ]; then
-    apt list --upgradable 2>/dev/null | awk 'NR>1 {print $1, $2}' | column -t
+    apt list --upgradable 2>/dev/null | awk 'NR>1 {print $1, $2}' | format_columns
 else
     echo "Package manager not supported for update check."
 fi
@@ -15,7 +23,7 @@ echo "------------------"
 echo "Package Sources:"
 if [ -f /etc/apt/sources.list ]; then
     echo "APT Sources:"
-    cat /etc/apt/sources.list | grep -v '^#' | awk '{print $1, $2, $3}' | column -t
+    cat /etc/apt/sources.list | grep -v '^#' | awk '{print $1, $2, $3}' | format_columns
 else
     echo "APT sources list not found."
 fi
@@ -24,7 +32,7 @@ echo "Package Dependencies:"
 if [ -x "$(command -v apt)" ]; then
     echo "Enter package name to check dependencies:"
     read package_name
-    apt-cache depends "$package_name" 2>/dev/null | awk '/Depends:/ {print $2}' | column -t
+    apt-cache depends "$package_name" 2>/dev/null | awk '/Depends:/ {print $2}' | format_columns
 else
     echo "Package manager not supported for dependency check."
 fi

@@ -3,7 +3,12 @@ import shlex
 import shutil
 import subprocess
 
-VERSION = "v0.2"
+if shutil.which("sudo") is None:
+    raise SystemExit(
+        "sudo is not installed. Log in as root with 'su -', then run 'apt install sudo'."
+    )
+
+VERSION = "v0.3"
 REPOSITORY_URL = "https://github.com/Asterlenist/sysadmintools"
 PACKAGE_MANAGERS = {
     "apt": ("install", "g++"),
@@ -47,11 +52,15 @@ while True:
 try:
     print("[1/3] Installin' dependencies... ")
     install_action, compiler_package = PACKAGE_MANAGERS[package_manager]
+    dependencies = ["tree", "git", "curl", compiler_package]
+    if package_manager in ("apt", "apt-get"):
+        dependencies.extend(["build-essential", "bsdmainutils", "util-linux"])
+
     dependency_command = ["sudo", package_manager_path, install_action]
     if package_manager == "pacman":
         dependency_command.append("--needed")
     subprocess.run(
-        [*dependency_command, "tree", "git", "curl", compiler_package],
+        [*dependency_command, *dependencies],
         check=True,
     )
 
