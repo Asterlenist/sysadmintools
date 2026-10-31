@@ -2,8 +2,24 @@
 
 set -euo pipefail
 
-VERSION="v0.3"
+VERSION="v0.31"
 REPOSITORY_URL="https://github.com/Asterlenist/sysadmintools"
+
+clone_or_pull_repository() {
+    local repository_url="$1"
+    local destination="$2"
+
+    if [[ -e "$destination" ]]; then
+        if git -C "$destination" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            git -C "$destination" pull
+        else
+            printf 'Destination exists but is not a Git repository: %s\n' "$destination" >&2
+            return 1
+        fi
+    else
+        git clone "$repository_url" "$destination"
+    fi
+}
 
 if ! command -v sudo >/dev/null 2>&1; then
     printf "sudo is not installed. Log in as root with 'su -', then run 'apt install sudo'.\n" >&2
@@ -85,7 +101,7 @@ printf "[2/3] Clonin' & buildin' from Github...\n"
 share_dir="$HOME/.local/share"
 mkdir -p "$share_dir"
 destination="$share_dir/sysadmintools"
-git clone "$REPOSITORY_URL" "$destination"
+clone_or_pull_repository "$REPOSITORY_URL" "$destination"
 cargo build --release --manifest-path "$destination/upd/Cargo.toml"
 g++ -std=c++11 "$destination/genpass/genpass.cpp" -o "$destination/genpass/genpass"
 g++ -std=c++11 "$destination/diskcheck/diskcheck.cc" -o "$destination/diskcheck/diskcheck"

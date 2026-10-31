@@ -141,10 +141,11 @@ optional user config files that are not present.
 `install.sh` is not required to use the tools. It prompts for a package
 manager, uses `sudo` to install dependencies (including a C++ compiler),
 downloads and runs the Rust installer, clones this repository into
-`~/.local/share/sysadmintools`, builds `upd`, `genpass`, and `diskcheck`, and
-appends aliases for all command-line tools to `~/.bashrc`. It stops if an
-installation, clone, or build command fails. Review the script before running
-it, since it makes system and shell configuration changes.
+`~/.local/share/sysadmintools` (or pulls updates if it is already cloned),
+builds `upd`, `genpass`, and `diskcheck`, and appends aliases for all
+command-line tools to `~/.bashrc`. It stops if an installation, clone, pull, or
+build command fails. Review the script before running it, since it makes
+system and shell configuration changes.
 
 To run the installer directly from GitHub:
 
@@ -152,9 +153,15 @@ To run the installer directly from GitHub:
 curl -fsSL https://raw.githubusercontent.com/Asterlenist/sysadmintools/main/install.sh | bash
 ```
 
-The installer is experimental and expects the destination repository not to
-already exist. The manual commands above are also available if you prefer not
-to run it.
+or:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Asterlenist/sysadmintools/main/install.py | python3
+```
+
+The installer is experimental. The destination must either not exist or
+already contain a Git repository. The manual commands above are also available
+if you prefer not to run it.
 
 ## License
 

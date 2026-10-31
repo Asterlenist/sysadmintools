@@ -8,7 +8,7 @@ if shutil.which("sudo") is None:
         "sudo is not installed. Log in as root with 'su -', then run 'apt install sudo'."
     )
 
-VERSION = "v0.3"
+VERSION = "v0.31"
 REPOSITORY_URL = "https://github.com/Asterlenist/sysadmintools"
 PACKAGE_MANAGERS = {
     "apt": ("install", "g++"),
@@ -20,6 +20,27 @@ PACKAGE_MANAGERS = {
 }
 
 print("Installer ", VERSION)
+
+
+def clone_or_pull_repository(repository_url: str, destination: str) -> None:
+    if os.path.exists(destination):
+        repository_check = subprocess.run(
+            ["git", "-C", destination, "rev-parse", "--is-inside-work-tree"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if (
+            repository_check.returncode != 0
+            or repository_check.stdout.strip() != "true"
+        ):
+            raise RuntimeError(
+                f"Destination exists but is not a Git repository: {destination}"
+            )
+        subprocess.run(["git", "-C", destination, "pull"], check=True)
+    else:
+        subprocess.run(["git", "clone", repository_url, destination], check=True)
+
 
 while True:
     package_manager = input("Write your Package Manager (example: apt) ").strip()
@@ -91,7 +112,7 @@ try:
     share_dir = os.path.expanduser("~/.local/share")
     os.makedirs(share_dir, exist_ok=True)
     dest = os.path.join(share_dir, "sysadmintools")
-    subprocess.run(["git", "clone", REPOSITORY_URL, dest], check=True)
+    clone_or_pull_repository(REPOSITORY_URL, dest)
     subprocess.run(
         ["cargo", "build", "--release"],
         cwd=os.path.join(dest, "upd"),
@@ -124,7 +145,7 @@ try:
         for alias, command in commands.items():
             bashrc.write(f"alias {alias}={shlex.quote(command)}\n")
 
-except (OSError, subprocess.CalledProcessError) as error:
+except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
     raise SystemExit(f"Installation failed: {error}") from error
 
 print("Installation complete! Please restart your terminal or run 'source ~/.bashrc' to apply the changes.")
